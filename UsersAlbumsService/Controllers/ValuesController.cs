@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using UsersAlbumsService.Models;
 
 namespace UsersAlbumsService.Controllers
 {
@@ -10,36 +11,41 @@ namespace UsersAlbumsService.Controllers
     [ApiController]
     public class ValuesController : ControllerBase
     {
-        // GET api/values
-        [HttpGet]
-        public ActionResult<IEnumerable<string>> Get()
+        private readonly DataServiceHttpClient _dataService;
+        public ValuesController(DataServiceHttpClient dataService)
         {
-            return new string[] { "value1", "value2" };
+            _dataService = dataService;
         }
 
-        // GET api/values/5
-        [HttpGet("{id}")]
-        public ActionResult<string> Get(int id)
+        [HttpGet("users")]
+        public async Task<ActionResult<IEnumerable<User>>> GetUsersAsync()
         {
-            return "value";
+            var data = await _dataService.SendRequestAsync<IEnumerable<User>>(HttpMethod.Get, "users");
+            return Ok(data);
         }
 
-        // POST api/values
-        [HttpPost]
-        public void Post([FromBody] string value)
+        [HttpGet("users/{id}")]
+        public async Task<ActionResult<User>> GetUserByIdAsync(int id)
         {
+            var data = await _dataService.SendRequestAsync<User>(HttpMethod.Get, $"users/{id}");
+            return Ok(data);
         }
 
-        // PUT api/values/5
-        [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
+        [HttpGet("albums")]
+        public async Task<ActionResult<IEnumerable<Album>>> GetAlbumsAsync([FromQuery]int? userId)
         {
+            var route = "albums";
+            if (userId != null)
+                route = $"albums?userId={userId}";
+            var data = await _dataService.SendRequestAsync<IEnumerable<Album>>(HttpMethod.Get, route);
+            return Ok(data);
         }
 
-        // DELETE api/values/5
-        [HttpDelete("{id}")]
-        public void Delete(int id)
+        [HttpGet("albums/{id}")]
+        public async Task<ActionResult<Album>> GetAlbumByIdAsync(int id)
         {
+            var data = await _dataService.SendRequestAsync<Album>(HttpMethod.Get, $"albums/{id}");
+            return Ok(data);
         }
     }
 }
